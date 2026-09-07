@@ -46,9 +46,10 @@ export default function VolumenPage() {
         .eq("promovido", true);
 
       if (checkPromovidos && checkPromovidos.length > 0) {
-        const orphanedIds = checkPromovidos
-          .filter((v: any) => !v.jugadores || (Array.isArray(v.jugadores) && v.jugadores.length === 0))
-          .map((v: any) => v.id);
+        type CheckPromovidoItem = { id: string; jugadores?: { id: string }[] | { id: string } | null };
+        const orphanedIds = (checkPromovidos as unknown as CheckPromovidoItem[])
+          .filter((v) => !v.jugadores || (Array.isArray(v.jugadores) && v.jugadores.length === 0))
+          .map((v) => v.id);
 
         if (orphanedIds.length > 0) {
           await supabase
@@ -148,8 +149,8 @@ export default function VolumenPage() {
 
       setIsModalOpen(false);
       fetchPlayers();
-    } catch (err: any) {
-      const errorMessage = err?.message || (typeof err === 'object' ? JSON.stringify(err) : String(err));
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : (typeof err === 'object' && err !== null && 'message' in err ? String((err as { message: unknown }).message) : String(err));
       console.error("Error al guardar jugador:", err);
       setFormError(`Ocurrió un error al guardar: ${errorMessage}`);
     } finally {
