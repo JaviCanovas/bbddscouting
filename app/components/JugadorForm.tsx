@@ -267,8 +267,13 @@ export default function JugadorForm({ mode, initialData }: JugadorFormProps) {
 
       setTimeout(() => router.push("/jugadores"), 800);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.error("Error al guardar:", message);
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "object" && err !== null && "message" in err
+          ? String((err as { message: unknown }).message)
+          : String(err);
+      console.error("Error al guardar:", message, err);
       setFormError(`Error al guardar: ${message}`);
     } finally {
       setIsSaving(false);
@@ -497,7 +502,7 @@ export default function JugadorForm({ mode, initialData }: JugadorFormProps) {
                   <input type="text" placeholder="A través de quién se conoce" value={contactoAmigoDe} onChange={(e) => setContactoAmigoDe(e.target.value)} className="w-full bg-neutral-950 border border-neutral-800 focus:border-emerald-500 text-base md:text-sm text-white rounded-xl px-4 py-3 outline-none transition min-h-[44px]" />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">Representante <span className="text-neutral-500 font-normal lowercase">(opcional)</span></label>
+                  <label className="block text-xs font-semibold text-neutral-400 uppercase tracking-wider mb-2">Agente / Representante <span className="text-neutral-500 font-normal lowercase">(opcional)</span></label>
                   <input type="text" placeholder="Agencia o nombre del agente" value={representante} onChange={(e) => setRepresentante(e.target.value)} className="w-full bg-neutral-950 border border-neutral-800 focus:border-emerald-500 text-base md:text-sm text-white rounded-xl px-4 py-3 outline-none transition min-h-[44px]" />
                 </div>
               </div>
