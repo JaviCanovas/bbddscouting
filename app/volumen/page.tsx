@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/app/lib/supabase";
 import { JugadorVolumen } from "@/types";
+import StarRating from "@/app/components/StarRating";
 
 export default function VolumenPage() {
   const router = useRouter();
@@ -15,6 +16,8 @@ export default function VolumenPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<JugadorVolumen | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [promotePlayer, setPromotePlayer] = useState<JugadorVolumen | null>(null);
+  const [promoteValoracion, setPromoteValoracion] = useState<1 | 2 | 3 | 4 | 5>(3);
 
   // Estados de UI
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
@@ -195,18 +198,23 @@ export default function VolumenPage() {
 
   // Promover jugador a base de datos específica (Iniciar transición a ficha)
   const handlePromote = (player: JugadorVolumen) => {
-    // Navegar a /jugadores/nuevo con los datos básicos.
-    // NOTA: No marcamos 'promovido = true' aquí para evitar que el jugador desaparezca
-    // si el usuario cancela o no llega a guardar el informe. Se marcará únicamente al guardar.
+    setPromotePlayer(player);
+    setPromoteValoracion(3);
+  };
+
+  const handleConfirmPromote = () => {
+    if (!promotePlayer) return;
     const queryParams = new URLSearchParams({
-      volumen_id: player.id,
-      nombre: player.nombre,
-      equipo: player.equipo,
+      volumen_id: promotePlayer.id,
+      nombre: promotePlayer.nombre,
+      equipo: promotePlayer.equipo,
+      valoracion_general: String(promoteValoracion),
     });
-    if (player.dorsal !== null) {
-      queryParams.append("dorsal", String(player.dorsal));
+    if (promotePlayer.dorsal !== null) {
+      queryParams.append("dorsal", String(promotePlayer.dorsal));
     }
 
+    setPromotePlayer(null);
     router.push(`/jugadores/nuevo?${queryParams.toString()}`);
   };
 
@@ -604,6 +612,64 @@ export default function VolumenPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal / Bottom Sheet PASAR A BD SCOUTING (VALORACIÓN GENERAL) */}
+      {promotePlayer && (
+        <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-black/80 backdrop-blur-sm transition-opacity duration-300">
+          <div className="w-full max-w-md bg-neutral-900 border-t md:border border-neutral-800 rounded-t-3xl md:rounded-2xl shadow-2xl p-6 relative animate-in slide-in-from-bottom-10 md:slide-in-from-bottom-0 md:zoom-in-95 duration-200">
+            <div className="w-12 h-1.5 bg-neutral-800 rounded-full mx-auto mb-4 md:hidden" />
+
+            <div className="flex items-start gap-3.5 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center flex-shrink-0 mt-0.5 text-emerald-400">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white leading-tight">Pasar a BD Scouting</h3>
+                <p className="text-neutral-400 text-sm mt-1">
+                  Vas a crear la ficha para <span className="text-white font-semibold">{promotePlayer.nombre}</span> ({promotePlayer.equipo}).
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-neutral-950/80 border border-neutral-800 rounded-xl p-4 my-5">
+              <StarRating
+                label="Valoración General (1 a 5 estrellas)"
+                value={promoteValoracion}
+                onChange={setPromoteValoracion}
+              />
+              <div className="mt-3 pt-3 border-t border-neutral-800/80 text-xs text-neutral-400 flex items-center justify-between">
+                <span>Criterio:</span>
+                <span className="font-semibold text-emerald-400">
+                  {promoteValoracion === 1 && "1/5 - Nivel bajo / descarte"}
+                  {promoteValoracion === 2 && "2/5 - A seguir / dudas"}
+                  {promoteValoracion === 3 && "3/5 - Nivel medio / interesante"}
+                  {promoteValoracion === 4 && "4/5 - Nivel alto / prioritario"}
+                  {promoteValoracion === 5 && "5/5 - Destacado / fichaje top"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-end gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setPromotePlayer(null)}
+                className="bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-5 py-3 rounded-xl sm:rounded-lg font-semibold min-h-[44px] transition order-2 sm:order-1"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmPromote}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-3 rounded-xl sm:rounded-lg font-bold min-h-[44px] transition flex items-center justify-center gap-2 order-1 sm:order-2 shadow-lg shadow-emerald-600/20"
+              >
+                Continuar a BD Scouting →
+              </button>
+            </div>
           </div>
         </div>
       )}

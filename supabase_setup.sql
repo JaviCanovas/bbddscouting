@@ -35,6 +35,7 @@ CREATE TABLE jugadores (
   contacto_telefono TEXT,
   contacto_amigo_de TEXT,
   representante TEXT,
+  valoracion_general SMALLINT CHECK (valoracion_general BETWEEN 1 AND 5) DEFAULT 3,
   tecnica SMALLINT CHECK (tecnica BETWEEN 1 AND 5),
   tactica SMALLINT CHECK (tactica BETWEEN 1 AND 5),
   fisico SMALLINT CHECK (fisico BETWEEN 1 AND 5),
@@ -54,6 +55,7 @@ CREATE TABLE jugadores (
 COMMENT ON TABLE jugadores IS 'Apartado especifico: ficha completa de jugadores promovidos desde volumen';
 COMMENT ON COLUMN jugadores.volumen_id IS 'FK a volumen_jugadores.id - referencia al registro original en volumen';
 COMMENT ON COLUMN jugadores.anio_nacimiento IS 'Anio de nacimiento del jugador (la edad se calcula en frontend)';
+COMMENT ON COLUMN jugadores.valoracion_general IS 'Valoracion general del jugador del 1 al 5 asignada al pasar de volumen a BD Scouting';
 COMMENT ON COLUMN jugadores.tecnica IS 'Valoracion tecnica del 1 al 5';
 COMMENT ON COLUMN jugadores.tactica IS 'Valoracion tactica del 1 al 5';
 COMMENT ON COLUMN jugadores.fisico IS 'Valoracion fisica del 1 al 5';
@@ -144,3 +146,13 @@ CREATE POLICY "Permitir actualizacion publica de imagenes"
 CREATE POLICY "Permitir eliminacion publica de imagenes"
   ON storage.objects FOR DELETE
   USING (bucket_id = 'jugadores-imagenes');
+
+-- ------------------------------------------------------------
+-- 6. MIGRACIONES / ACTUALIZACIONES PARA BASES DE DATOS EXISTENTES
+-- ------------------------------------------------------------
+
+-- Añadir 'valoracion_general' (1 a 5 estrellas) a la tabla 'jugadores'
+ALTER TABLE jugadores 
+ADD COLUMN IF NOT EXISTS valoracion_general SMALLINT CHECK (valoracion_general BETWEEN 1 AND 5) DEFAULT 3;
+
+COMMENT ON COLUMN jugadores.valoracion_general IS 'Valoracion general del jugador del 1 al 5 asignada al pasar de volumen a BD Scouting';

@@ -19,6 +19,7 @@ export interface Jugador {
   contacto_telefono: string | null;
   contacto_amigo_de: string | null;
   representante: string | null;
+  valoracion_general?: 1 | 2 | 3 | 4 | 5;
   tecnica: 1 | 2 | 3 | 4 | 5;
   tactica: 1 | 2 | 3 | 4 | 5;
   fisico: 1 | 2 | 3 | 4 | 5;

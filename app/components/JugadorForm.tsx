@@ -43,6 +43,7 @@ export interface JugadorFormInitialData {
   contacto_telefono?: string | null;
   contacto_amigo_de?: string | null;
   representante?: string | null;
+  valoracion_general?: number;
   tecnica?: number;
   tactica?: number;
   fisico?: number;
@@ -83,6 +84,9 @@ export default function JugadorForm({ mode, initialData }: JugadorFormProps) {
   const [contactoAmigoDe, setContactoAmigoDe] = useState(initialData?.contacto_amigo_de || "");
   const [representante, setRepresentante] = useState(initialData?.representante || "");
 
+  const [valoracionGeneral, setValoracionGeneral] = useState<1 | 2 | 3 | 4 | 5>(
+    (initialData?.valoracion_general as 1 | 2 | 3 | 4 | 5) || 3
+  );
   const [tecnica, setTecnica] = useState<1 | 2 | 3 | 4 | 5>((initialData?.tecnica as 1 | 2 | 3 | 4 | 5) || 3);
   const [tactica, setTactica] = useState<1 | 2 | 3 | 4 | 5>((initialData?.tactica as 1 | 2 | 3 | 4 | 5) || 3);
   const [fisico, setFisico] = useState<1 | 2 | 3 | 4 | 5>((initialData?.fisico as 1 | 2 | 3 | 4 | 5) || 3);
@@ -119,6 +123,7 @@ export default function JugadorForm({ mode, initialData }: JugadorFormProps) {
       setContactoTelefono(initialData.contacto_telefono || "");
       setContactoAmigoDe(initialData.contacto_amigo_de || "");
       setRepresentante(initialData.representante || "");
+      setValoracionGeneral((initialData.valoracion_general as 1 | 2 | 3 | 4 | 5) || 3);
       setTecnica((initialData.tecnica as 1 | 2 | 3 | 4 | 5) || 3);
       setTactica((initialData.tactica as 1 | 2 | 3 | 4 | 5) || 3);
       setFisico((initialData.fisico as 1 | 2 | 3 | 4 | 5) || 3);
@@ -226,6 +231,7 @@ export default function JugadorForm({ mode, initialData }: JugadorFormProps) {
         contacto_telefono: contactoTelefono.trim() || null,
         contacto_amigo_de: contactoAmigoDe.trim() || null,
         representante: representante.trim() || null,
+        valoracion_general: valoracionGeneral,
         tecnica,
         tactica,
         fisico,
@@ -245,11 +251,28 @@ export default function JugadorForm({ mode, initialData }: JugadorFormProps) {
           .from("jugadores")
           .update(payload)
           .eq("id", initialData.id);
-        if (error) throw error;
+
+        if (error && error.message && error.message.includes("valoracion_general")) {
+          const fallbackPayload = { ...payload };
+          delete (fallbackPayload as { valoracion_general?: number }).valoracion_general;
+          const retry = await supabase.from("jugadores").update(fallbackPayload).eq("id", initialData.id);
+          if (retry.error) throw retry.error;
+        } else if (error) {
+          throw error;
+        }
+
         setFormSuccess("Ficha actualizada correctamente.");
       } else {
         const { error } = await supabase.from("jugadores").insert([payload]);
-        if (error) throw error;
+
+        if (error && error.message && error.message.includes("valoracion_general")) {
+          const fallbackPayload = { ...payload };
+          delete (fallbackPayload as { valoracion_general?: number }).valoracion_general;
+          const retry = await supabase.from("jugadores").insert([fallbackPayload]);
+          if (retry.error) throw retry.error;
+        } else if (error) {
+          throw error;
+        }
 
         // Si se proviene de volumen_jugadores, marcar como promovido tras guardar con éxito la ficha
         if (initialData?.volumen_id) {
@@ -514,6 +537,19 @@ export default function JugadorForm({ mode, initialData }: JugadorFormProps) {
                 <h2 className="text-lg font-bold text-white tracking-tight">Valoración</h2>
                 <div className="flex-grow h-px bg-neutral-800" />
               </div>
+
+              {/* Valoración General destacada */}
+              <div className="mb-6 p-4 bg-neutral-950/80 border border-amber-500/30 rounded-xl">
+                <StarRating
+                  label="Valoración General (1 a 5 estrellas)"
+                  value={valoracionGeneral}
+                  onChange={setValoracionGeneral}
+                />
+                <p className="text-xs text-neutral-400 mt-2">
+                  Puntuación general del jugador asignada para la Base de Datos de Scouting.
+                </p>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                 <StarRating label="Técnica" value={tecnica} onChange={setTecnica} />
                 <StarRating label="Táctica" value={tactica} onChange={setTactica} />

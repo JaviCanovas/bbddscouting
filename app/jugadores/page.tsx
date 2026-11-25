@@ -13,6 +13,7 @@ interface Jugador {
   nombre: string;
   anio_nacimiento: number;
   equipo: string;
+  valoracion_general?: number | null;
   tecnica: number;
   tactica: number;
   fisico: number;
@@ -114,6 +115,18 @@ function PlayerCard({
           </span>
           <span className="text-xs text-neutral-400 leading-none font-medium">media</span>
         </div>
+
+        {/* Valoración General badge — top right, overlapping photo */}
+        {player.valoracion_general && (
+          <div
+            className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-xl bg-neutral-900/90 backdrop-blur-md border border-amber-500/40 text-amber-400 text-xs font-bold shadow-lg"
+            title={`Valoración General: ${player.valoracion_general}/5 estrellas`}
+          >
+            <span>★</span>
+            <span>{player.valoracion_general}</span>
+            <span className="text-neutral-500 font-normal">/5</span>
+          </div>
+        )}
 
         {/* Video indicator */}
         {player.video_url && (
@@ -227,10 +240,11 @@ export default function JugadoresPage() {
   const [filterLateralidad, setFilterLateralidad] = useState("");
   const [filterPosicion, setFilterPosicion] = useState("");
   const [filterAnio, setFilterAnio] = useState("");
+  const [filterValoracion, setFilterValoracion] = useState<number>(0);
   const [filterTecnica, setFilterTecnica] = useState<number>(0);
   const [filterTactica, setFilterTactica] = useState<number>(0);
   const [filterFisico, setFilterFisico] = useState<number>(0);
-  const [sortBy, setSortBy] = useState<"media_desc" | "media_asc" | "nombre" | "edad">("media_desc");
+  const [sortBy, setSortBy] = useState<"media_desc" | "media_asc" | "valoracion_desc" | "valoracion_asc" | "nombre" | "edad">("media_desc");
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   // Delete modal
@@ -296,6 +310,9 @@ export default function JugadoresPage() {
     if (filterAnio) {
       list = list.filter((p) => p.anio_nacimiento === parseInt(filterAnio, 10));
     }
+    if (filterValoracion > 0) {
+      list = list.filter((p) => (p.valoracion_general || 0) >= filterValoracion);
+    }
     if (filterTecnica > 0) {
       list = list.filter((p) => p.tecnica >= filterTecnica);
     }
@@ -311,13 +328,15 @@ export default function JugadoresPage() {
       const mb = calcularMedia(b.tecnica, b.tactica, b.fisico);
       if (sortBy === "media_desc") return mb - ma;
       if (sortBy === "media_asc") return ma - mb;
+      if (sortBy === "valoracion_desc") return (b.valoracion_general || 0) - (a.valoracion_general || 0);
+      if (sortBy === "valoracion_asc") return (a.valoracion_general || 0) - (b.valoracion_general || 0);
       if (sortBy === "nombre") return a.nombre.localeCompare(b.nombre);
       if (sortBy === "edad") return a.anio_nacimiento - b.anio_nacimiento; // oldest first
       return 0;
     });
 
     return list;
-  }, [players, search, filterEquipo, filterLateralidad, filterPosicion, filterAnio, filterTecnica, filterTactica, filterFisico, sortBy]);
+  }, [players, search, filterEquipo, filterLateralidad, filterPosicion, filterAnio, filterValoracion, filterTecnica, filterTactica, filterFisico, sortBy]);
 
   // Delete handler
   const handleDeleteConfirm = async () => {
@@ -484,6 +503,17 @@ export default function JugadoresPage() {
             </select>
 
             <select
+              value={filterValoracion}
+              onChange={(e) => setFilterValoracion(Number(e.target.value))}
+              className="bg-neutral-900 border border-neutral-800 focus:border-emerald-500 text-base md:text-sm text-white rounded-xl px-4 py-3 outline-none transition cursor-pointer min-w-[140px] min-h-[44px] flex-1"
+            >
+              <option value="0">Val. General: Todas</option>
+              {[5, 4, 3, 2, 1].map((val) => (
+                <option key={val} value={val}>★ ≥ {val}</option>
+              ))}
+            </select>
+
+            <select
               value={filterTecnica}
               onChange={(e) => setFilterTecnica(Number(e.target.value))}
               className="bg-neutral-900 border border-neutral-800 focus:border-emerald-500 text-base md:text-sm text-white rounded-xl px-4 py-3 outline-none transition cursor-pointer min-w-[120px] min-h-[44px] flex-1"
@@ -523,6 +553,8 @@ export default function JugadoresPage() {
             >
               <option value="media_desc">Media: mayor primero</option>
               <option value="media_asc">Media: menor primero</option>
+              <option value="valoracion_desc">Val. General: mayor primero</option>
+              <option value="valoracion_asc">Val. General: menor primero</option>
               <option value="nombre">Nombre A-Z</option>
               <option value="edad">Más veterano primero</option>
             </select>

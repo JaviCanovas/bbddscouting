@@ -38,6 +38,7 @@ export default function EditarPage({ params }: EditarPageProps) {
           contacto_telefono: data.contacto_telefono,
           contacto_amigo_de: data.contacto_amigo_de,
           representante: data.representante,
+          valoracion_general: data.valoracion_general || 3,
           tecnica: data.tecnica,
           tactica: data.tactica,
           fisico: data.fisico,

@@ -18,6 +18,7 @@ interface Jugador {
   contacto_telefono: string | null;
   contacto_amigo_de: string | null;
   representante: string | null;
+  valoracion_general?: number | null;
   tecnica: number;
   tactica: number;
   fisico: number;
@@ -320,6 +321,21 @@ export default function JugadorDetailPage({ params }: PageProps) {
                   <span className="text-xs text-neutral-500 mt-1">media</span>
                 </div>
 
+                {/* Valoración General prominente */}
+                <div className="flex flex-col items-center justify-center min-w-[5.5rem] h-20 px-3 rounded-2xl bg-neutral-950 border border-neutral-800 shadow-xl">
+                  <div className="flex items-center gap-0.5 text-amber-400">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <span key={s} className={`text-base leading-none ${s <= (jugador.valoracion_general || 3) ? "text-amber-400 drop-shadow-[0_0_3px_rgba(251,191,36,0.5)]" : "text-neutral-700"}`}>
+                        ★
+                      </span>
+                    ))}
+                  </div>
+                  <span className="text-sm font-black font-mono text-white mt-1">
+                    {jugador.valoracion_general || 3}/5
+                  </span>
+                  <span className="text-[10px] text-neutral-400 uppercase font-semibold tracking-wider">val. general</span>
+                </div>
+
                 {/* Edad */}
                 <div className="flex flex-col">
                   <span className="text-4xl font-black text-white leading-none">{edad}</span>
@@ -360,6 +376,7 @@ export default function JugadorDetailPage({ params }: PageProps) {
             Valoración técnica
           </h2>
           <div className="space-y-4">
+            <StatBar label="General" value={jugador.valoracion_general || 3} />
             <StatBar label="Técnica" value={jugador.tecnica} />
             <StatBar label="Táctica" value={jugador.tactica} />
             <StatBar label="Físico" value={jugador.fisico} />

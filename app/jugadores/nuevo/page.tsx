@@ -8,12 +8,17 @@ import type { JugadorFormInitialData } from "@/app/components/JugadorForm";
 function NuevoContent() {
   const searchParams = useSearchParams();
 
+  const vgParam = searchParams.get("valoracion_general");
+  const parsedVg = vgParam ? parseInt(vgParam, 10) : 3;
+  const valoracion_general = (!isNaN(parsedVg) && parsedVg >= 1 && parsedVg <= 5) ? (parsedVg as 1 | 2 | 3 | 4 | 5) : 3;
+
   // Pre-fill from volumen if coming from promotion flow
   const initialData: JugadorFormInitialData = {
     volumen_id: searchParams.get("volumen_id") || undefined,
     nombre: searchParams.get("nombre") || "",
     equipo: searchParams.get("equipo") || "",
     representante: searchParams.get("representante") || "",
+    valoracion_general,
   };
 
   return <JugadorForm mode="create" initialData={initialData} />;
